@@ -1,0 +1,1 @@
+savedcmd_/home/back/bbb_image/01-gpio-ioctl/00-init-exit/Module.symvers :=  scripts/mod/modpost -m -a      -o /home/back/bbb_image/01-gpio-ioctl/00-init-exit/Module.symvers -T /home/back/bbb_image/01-gpio-ioctl/00-init-exit/modules.order -i Module.symvers -e 
