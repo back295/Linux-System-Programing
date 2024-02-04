@@ -1,1 +1,0 @@
-savedcmd_/home/back/bbb_image/01-gpio-ioctl/00-init-exit/hello.mod := printf '%s\n'   hello.o | awk '!x[$$0]++ { print("/home/back/bbb_image/01-gpio-ioctl/00-init-exit/"$$0) }' > /home/back/bbb_image/01-gpio-ioctl/00-init-exit/hello.mod
