@@ -13,6 +13,7 @@
 #define LED 31
 
 static int gpio_value = 0;
+static int gpio_index = 0;
 static char gpio_direction[5];
 
 static struct {
@@ -34,14 +35,24 @@ static ssize_t direction_show(struct kobject *kobj, struct kobj_attribute *attr,
 static ssize_t direction_store(struct kobject *kobj, struct kobj_attribute *attr,
 			 const char *buf, size_t count);
 
+static ssize_t export_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count);
+
+static ssize_t unexport_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count);
+
 /* Khai bao cac attribute ma object support */
 static struct kobj_attribute value = __ATTR(value, 0660, value_show, value_store);
 static struct kobj_attribute direction = __ATTR(direction, 0660, direction_show, direction_store);
+static struct kobj_attribute export = __ATTR(export, 0660, NULL, export_store);
+static struct kobj_attribute unexport = __ATTR(unexport, 0660, NULL, unexport_store);
 
 /* Viec tao ra nhieu attribute thi nen nhom chung thanh group roi add the group*/
 static struct attribute *m_attr[] = {&value.attr, 
-                                    &direction.attr, 
-                                    NULL};
+                                     &direction.attr,
+                                     &export.attr,
+                                     &unexport.attr,
+                                     NULL};
 
 static struct attribute_group attr_grp = {
     .attrs = m_attr
@@ -62,11 +73,11 @@ static ssize_t value_store(struct kobject *kobj, struct kobj_attribute *attr,
     switch(gpio_value)
     {
         case 0:
-            gpio_set_value(LED, 0);
+            gpio_set_value(gpio_index, 0);
             pr_info("Turn OFF LED.\n");
             break;
         case 1:
-            gpio_set_value(LED, 1);
+            gpio_set_value(gpio_index, 1);
             pr_info("Turn ON LED.\n");
             break;
         default:
@@ -85,11 +96,11 @@ static ssize_t direction_store(struct kobject *kobj, struct kobj_attribute *attr
 {
     switch(count - 1) {
         case 3:
-            gpio_direction_output(LED, 0);
+            gpio_direction_output(gpio_index, 0);
             pr_info("Set GPIO direction: OUTPUT.\n");
             break;
         case 2 :
-            gpio_direction_input(LED);
+            gpio_direction_input(gpio_index);
             pr_info("Set GPIO direction: INPUT.\n");
             break;
         default:
@@ -100,6 +111,25 @@ static ssize_t direction_store(struct kobject *kobj, struct kobj_attribute *attr
 
     return count;
 }
+
+static ssize_t export_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
+{
+    sscanf(buf, "%d", &gpio_index);
+
+    gpio_request(gpio_index, "LED");
+
+    return count;
+}    
+
+static ssize_t unexport_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
+{
+    sscanf(buf, "%d", &gpio_index);
+    gpio_free(gpio_index);
+
+    return count;
+}    
 
 static int __init gpio_sysfs_init(void)
 {
@@ -112,7 +142,6 @@ static int __init gpio_sysfs_init(void)
         goto rm_kobj;
     }
 
-    gpio_request(LED, "LED");
     pr_info("Initialize GPIO sysfs module successfully!\n");
 
     return 0;
@@ -125,7 +154,7 @@ rm_kobj:
 
 static void __exit gpio_sysfs_exit(void)
 {
-    gpio_free(LED);
+    gpio_free(gpio_index);
     /* 02. remove cac attribute file truoc */
     sysfs_remove_group(mdev.m_kobj, &attr_grp);
     /* 01. remove object file sau*/
